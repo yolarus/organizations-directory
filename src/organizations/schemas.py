@@ -14,17 +14,62 @@ class PhoneSchema(BaseSchema):
     phone: str
 
 
-class BuildingDetailSchema(BaseSchema):
-    """Building detail schema"""
+# Building
+class BuildingOutSchema(BaseSchema):
+    """Building out schema"""
     uuid: UUID
     address: str
     latitude: str
     longitude: str
 
 
+class BuildingListItemSchema(BaseSchema):
+    """Building list item schema"""
+    uuid: UUID
+    address: str
+
+
+class BuildingInSchema(BaseSchema):
+    """Building in schema"""
+    latitude: str
+    longitude: str
+
+    @field_validator('latitude')
+    def check_latitude(cls, latitude: str | None) -> str | None:
+        """Check latitude."""
+        pattern = re.compile(r'-?\d{1,2}(\.\d+)?')
+        if latitude is not None:
+            if not pattern.match(latitude):
+                error = [{'field': 'latitude', 'message': 'Latitude should be in format 00.0000'}]
+                raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, error)
+        return latitude
+
+    @field_validator('longitude')
+    def check_longitude(cls, longitude: str | None) -> str | None:
+        """Check latitude."""
+        pattern = re.compile(r'-?\d{1,3}(\.\d+)?')
+        if longitude is not None:
+            if not pattern.match(longitude):
+                error = [{'field': 'longitude', 'message': 'Longitude should be in format 000.0000'}]
+                raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, error)
+        return longitude
+
+
+class BuildingCreateSchema(BuildingInSchema):
+    """Building create schema"""
+    address: str
+
+
+class BuildingUpdateSchema(BuildingInSchema):
+    """Building update schema"""
+    latitude: str = None
+    longitude: str = None
+    address: str = None
+
+
 # Organization
 class OrganizationInSchema(BaseSchema):
-    """Organization create request schema."""
+    """Organization in schema."""
     phones: list[str]
 
     @field_validator('phones')
@@ -65,7 +110,7 @@ class OrganizationDetailSchema(BaseSchema):
     """Organization detail schema."""
     uuid: UUID
     name: str
-    building: BuildingDetailSchema
+    building: BuildingOutSchema
     activities_tree: list[ActivityTreeItemSchema] = list()
     phones: list[PhoneSchema]
 

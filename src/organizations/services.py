@@ -2,7 +2,9 @@ from src import ActivityDB
 from src.organizations.schemas import ActivityTreeItemSchema
 
 
-async def get_activities_tree(activities: list[ActivityDB]):
+async def get_activities_tree(activities: list[ActivityDB]) -> list[ActivityTreeItemSchema]:
+    """Get activities tree from list for activities"""
+
     def convert(value_):
         if not isinstance(value, dict):
             return value
