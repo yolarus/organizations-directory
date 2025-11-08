@@ -1,5 +1,6 @@
 import uvicorn
 from fastapi import FastAPI
+from fastapi_pagination import add_pagination
 
 from src.config.settings import project_config
 from src.organizations.routers import organization_router
@@ -26,6 +27,9 @@ app = FastAPI(
 )
 
 app.include_router(organization_router, prefix=organization_url(), tags=[organization_url.module])
+
+add_pagination(app)
+
 
 if __name__ == '__main__':
     uvicorn.run('main:app', host='127.0.0.1', port=8000, reload=True)
