@@ -6,6 +6,7 @@ from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
+from src.auth.auth import BaseAuth
 from src.base.paginators import PaginatePage
 from src.base.routers import FastAPIRouter
 from src.base.schemas import responses, UUIDSchema
@@ -37,6 +38,7 @@ organization_router = FastAPIRouter()
 async def organization_create(
         body: OrganizationCreateSchema,
         session: AsyncSession = Depends(get_async_session),
+        _: AsyncSession = Depends(BaseAuth())
 ) -> UUIDSchema:
     """Organization create."""
     result = await OrganizationSession(session).organization_create(body)
@@ -71,6 +73,7 @@ async def organization_list(
         search_activity: Annotated[str, Query(description='Search by activity name')] = None,
         search_name: Annotated[str, Query(description='Search by organization name')] = None,
         session: AsyncSession = Depends(get_async_session),
+        _: AsyncSession = Depends(BaseAuth())
 ) -> PaginatePage[OrganizationListItemSchema]:
     """Organization list."""
     filters = get_filters(
@@ -95,6 +98,7 @@ async def organization_list(
 async def organization_detail(
         organization_uuid: UUID,
         session: AsyncSession = Depends(get_async_session),
+        _: AsyncSession = Depends(BaseAuth())
 ) -> OrganizationDetailSchema:
     """Organization detail."""
     result = await OrganizationSession(session).organization_detail(organization_uuid)
@@ -115,6 +119,7 @@ async def organization_update(
         organization_uuid: UUID,
         body: OrganizationUpdateSchema,
         session: AsyncSession = Depends(get_async_session),
+        _: AsyncSession = Depends(BaseAuth())
 ) -> UUIDSchema:
     """Organization update."""
     result = await OrganizationSession(session).organization_update(body, organization_uuid)
@@ -134,6 +139,7 @@ async def organization_update(
 async def organization_delete(
         organization_uuid: UUID,
         session: AsyncSession = Depends(get_async_session),
+        _: AsyncSession = Depends(BaseAuth())
 ) -> None:
     """Organization delete."""
     await OrganizationSession(session).organization_delete(organization_uuid)
@@ -155,6 +161,7 @@ async def organization_delete(
 async def building_create(
         body: BuildingCreateSchema,
         session: AsyncSession = Depends(get_async_session),
+        _: AsyncSession = Depends(BaseAuth())
 ) -> BuildingOutSchema:
     """Building create."""
     result = await OrganizationSession(session).building_create(body)
@@ -185,6 +192,7 @@ async def building_list(
             ShapeEnum, Query(description='Shape of the zone for which the calculation will be made')
         ] = ShapeEnum.circle,
         session: AsyncSession = Depends(get_async_session),
+        _: AsyncSession = Depends(BaseAuth())
 ) -> PaginatePage[BuildingListItemSchema]:
     """Building list."""
     filters = get_filters(latitude=latitude, longitude=longitude, radius=radius, shape=shape)
@@ -206,6 +214,7 @@ async def building_list(
 async def building_detail(
         building_uuid: UUID,
         session: AsyncSession = Depends(get_async_session),
+        _: AsyncSession = Depends(BaseAuth())
 ) -> BuildingOutSchema:
     """Building detail."""
     result = await OrganizationSession(session).building_detail(building_uuid)
@@ -226,6 +235,7 @@ async def building_update(
         building_uuid: UUID,
         body: BuildingUpdateSchema,
         session: AsyncSession = Depends(get_async_session),
+        _: AsyncSession = Depends(BaseAuth())
 ) -> BuildingOutSchema:
     """Building update."""
     result = await OrganizationSession(session).building_update(body, building_uuid)
@@ -245,6 +255,7 @@ async def building_update(
 async def building_delete(
         building_uuid: UUID,
         session: AsyncSession = Depends(get_async_session),
+        _: AsyncSession = Depends(BaseAuth())
 ) -> None:
     """Building delete."""
     await OrganizationSession(session).building_delete(building_uuid)
@@ -266,6 +277,7 @@ async def building_delete(
 async def activity_create(
         body: ActivityCreateSchema,
         session: AsyncSession = Depends(get_async_session),
+        _: AsyncSession = Depends(BaseAuth())
 ) -> ActivityOutSchema:
     """Activity create."""
     result = await OrganizationSession(session).activity_create(body)
@@ -283,6 +295,7 @@ async def activity_create(
 )
 async def activity_list(
         session: AsyncSession = Depends(get_async_session),
+        _: AsyncSession = Depends(BaseAuth())
 ) -> PaginatePage[ActivityListItemSchema]:
     """Activity list."""
     activities = await OrganizationSession(session).activity_list()
@@ -303,6 +316,7 @@ async def activity_list(
 async def activity_detail(
         activity_uuid: UUID,
         session: AsyncSession = Depends(get_async_session),
+        _: AsyncSession = Depends(BaseAuth())
 ) -> ActivityDetailSchema:
     """Activity detail."""
     result = await OrganizationSession(session).activity_detail(activity_uuid)
@@ -323,6 +337,7 @@ async def activity_update(
         activity_uuid: UUID,
         body: ActivityUpdateSchema,
         session: AsyncSession = Depends(get_async_session),
+        _: AsyncSession = Depends(BaseAuth())
 ) -> ActivityOutSchema:
     """Activity update."""
     result = await OrganizationSession(session).activity_update(body, activity_uuid)
@@ -342,6 +357,7 @@ async def activity_update(
 async def activity_delete(
         activity_uuid: UUID,
         session: AsyncSession = Depends(get_async_session),
+        _: AsyncSession = Depends(BaseAuth())
 ) -> None:
     """Activity delete."""
     await OrganizationSession(session).activity_delete(activity_uuid)

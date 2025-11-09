@@ -19,6 +19,7 @@ class EnvSettings(BaseSettings):
 class AppSettings(EnvSettings):
     """App settings."""
     DEBUG: bool = False
+    STATIC_TOKEN: str = ''
 
 
 class DatabaseSettings(EnvSettings):
