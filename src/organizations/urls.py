@@ -19,6 +19,11 @@ class OrganizationURL(BaseURL):
         self.building_detail: str = '/buildings/{building_uuid}/'
         self.building_update: str = '/buildings/{building_uuid}/'
         self.building_delete: str = '/buildings/{building_uuid}/'
+        self.activity_list: str = '/activities/'
+        self.activity_create: str = '/activities/'
+        self.activity_detail: str = '/activities/{activity_uuid}/'
+        self.activity_update: str = '/activities/{activity_uuid}/'
+        self.activity_delete: str = '/activities/{activity_uuid}/'
 
 
 organization_url = OrganizationURL()

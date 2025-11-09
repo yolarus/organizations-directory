@@ -10,7 +10,8 @@ from src.base.routers import FastAPIRouter
 from src.base.schemas import responses, UUIDSchema
 from src.config.session import get_async_session
 from src.organizations.schemas import OrganizationCreateSchema, OrganizationListItemSchema, OrganizationDetailSchema, \
-    OrganizationUpdateSchema, BuildingOutSchema, BuildingCreateSchema, BuildingListItemSchema, BuildingUpdateSchema
+    OrganizationUpdateSchema, BuildingOutSchema, BuildingCreateSchema, BuildingListItemSchema, BuildingUpdateSchema, \
+    ActivityCreateSchema, ActivityOutSchema, ActivityListItemSchema, ActivityDetailSchema, ActivityUpdateSchema
 from src.organizations.sessions import OrganizationSession
 from src.organizations.urls import organization_url
 
@@ -62,6 +63,7 @@ async def organization_list(
     response_model=OrganizationDetailSchema,
     responses=responses(
         OrganizationDetailSchema,
+        statuses=[status.HTTP_404_NOT_FOUND],
         exclude=[status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
     ),
     description='Organization detail',
@@ -158,6 +160,7 @@ async def building_list(
     response_model=BuildingOutSchema,
     responses=responses(
         BuildingOutSchema,
+        statuses=[status.HTTP_404_NOT_FOUND],
         exclude=[status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
     ),
     description='Building detail',
@@ -207,3 +210,100 @@ async def building_delete(
 ) -> None:
     """Building delete."""
     await OrganizationSession(session).building_delete(building_uuid)
+
+
+# Activity
+@organization_router.post(
+    organization_url.activity_create,
+    response_model=ActivityOutSchema,
+    responses=responses(
+        ActivityOutSchema,
+        status.HTTP_201_CREATED,
+        statuses=[status.HTTP_400_BAD_REQUEST, status.HTTP_404_NOT_FOUND, status.HTTP_409_CONFLICT],
+        exclude=[status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
+    ),
+    status_code=status.HTTP_201_CREATED,
+    description='Activity create',
+)
+async def activity_create(
+        body: ActivityCreateSchema,
+        session: AsyncSession = Depends(get_async_session),
+) -> ActivityOutSchema:
+    """Activity create."""
+    result = await OrganizationSession(session).activity_create(body)
+    return result
+
+
+@organization_router.get(
+    organization_url.activity_list,
+    response_model=PaginatePage[ActivityListItemSchema],
+    responses=responses(
+        PaginatePage[ActivityListItemSchema],
+        exclude=[status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
+    ),
+    description='Activity list',
+)
+async def activity_list(
+        session: AsyncSession = Depends(get_async_session),
+) -> PaginatePage[ActivityListItemSchema]:
+    """Activity list."""
+    activities = await OrganizationSession(session).activity_list()
+    result = await paginate(session, activities)
+    return result
+
+
+@organization_router.get(
+    organization_url.activity_detail,
+    response_model=ActivityDetailSchema,
+    responses=responses(
+        ActivityDetailSchema,
+        statuses=[status.HTTP_404_NOT_FOUND],
+        exclude=[status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
+    ),
+    description='Activity detail',
+)
+async def activity_detail(
+        activity_uuid: UUID,
+        session: AsyncSession = Depends(get_async_session),
+) -> ActivityDetailSchema:
+    """Activity detail."""
+    result = await OrganizationSession(session).activity_detail(activity_uuid)
+    return result
+
+
+@organization_router.post(
+    organization_url.activity_update,
+    response_model=ActivityOutSchema,
+    responses=responses(
+        ActivityOutSchema,
+        statuses=[status.HTTP_400_BAD_REQUEST, status.HTTP_404_NOT_FOUND, status.HTTP_409_CONFLICT],
+        exclude=[status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
+    ),
+    description='Activity update',
+)
+async def activity_update(
+        activity_uuid: UUID,
+        body: ActivityUpdateSchema,
+        session: AsyncSession = Depends(get_async_session),
+) -> ActivityOutSchema:
+    """Activity update."""
+    result = await OrganizationSession(session).activity_update(body, activity_uuid)
+    return result
+
+
+@organization_router.delete(
+    organization_url.activity_delete,
+    responses=responses(
+        response_status=status.HTTP_204_NO_CONTENT,
+        statuses=[status.HTTP_404_NOT_FOUND],
+        exclude=[status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
+    ),
+    status_code=status.HTTP_204_NO_CONTENT,
+    description='Activity delete',
+)
+async def activity_delete(
+        activity_uuid: UUID,
+        session: AsyncSession = Depends(get_async_session),
+) -> None:
+    """Activity delete."""
+    await OrganizationSession(session).activity_delete(activity_uuid)
