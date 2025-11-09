@@ -32,11 +32,24 @@ class DatabaseSettings(EnvSettings):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._database_url = None
 
     @property
     def database_url(self):
         """URL database Postgres."""
+        if self._database_url:
+            return self._database_url
         return f'postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}'
+
+    @database_url.setter
+    def database_url(self, value):
+        """Setter of database url."""
+        self._database_url = value
+
+    @property
+    def test_database_url(self):
+        """URL test database."""
+        return 'sqlite+aiosqlite:///:memory:'
 
 
 class Config(EnvSettings):

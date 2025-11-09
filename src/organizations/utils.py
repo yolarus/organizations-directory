@@ -7,24 +7,26 @@ from fastapi import HTTPException
 from starlette import status
 
 
-def check_latitude(latitude: str | None) -> str | None:
+def check_latitude(latitude: Decimal | None) -> Decimal | None:
     """Check latitude."""
     pattern = re.compile(r'-?\d{1,2}(\.\d+)?')
+    latitude = f'{latitude}'
     if latitude is not None:
         if not pattern.match(latitude):
-            error = [{'field': 'latitude', 'message': 'Latitude should be in format 00.0000'}]
+            error = [{'field': 'latitude', 'message': 'Latitude should be in format 11.1111'}]
             raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, error)
-    return latitude
+        return Decimal(latitude)
 
 
-def check_longitude(longitude: str | None) -> str | None:
+def check_longitude(longitude: Decimal | None) -> Decimal | None:
     """Check longitude."""
     pattern = re.compile(r'-?\d{1,3}(\.\d+)?')
+    longitude = f'{longitude}'
     if longitude is not None:
         if not pattern.match(longitude):
-            error = [{'field': 'longitude', 'message': 'Longitude should be in format 000.0000'}]
+            error = [{'field': 'longitude', 'message': 'Longitude should be in format 111.1111'}]
             raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, error)
-    return longitude
+        return Decimal(longitude)
 
 
 def haversine(lat1: Decimal, lon1: Decimal, lat2: Decimal, lon2: Decimal) -> float:

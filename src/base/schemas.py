@@ -39,9 +39,8 @@ class ResponseSchema:
     """Response Schema."""
     base = {
         status.HTTP_401_UNAUTHORIZED: {'model': ExceptionSchema},
-        status.HTTP_403_FORBIDDEN: {'model': ExceptionSchema},
         status.HTTP_405_METHOD_NOT_ALLOWED: {'model': ExceptionSchema},
-        status.HTTP_422_UNPROCESSABLE_ENTITY: {'model': ExceptionValidationSchema},
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {'model': ExceptionValidationSchema},
     }
 
     def get_base_statuses(self, exclude: list = None) -> dict:

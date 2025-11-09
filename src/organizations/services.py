@@ -86,7 +86,7 @@ def filter_buildings_in_radius(
     max_lon = center_lon + max_d_lon
     result = []
     for building in buildings:
-        lat, lon = Decimal(building.latitude), Decimal(building.longitude)
+        lat, lon = building.latitude, building.longitude
         if shape == ShapeEnum.circle:
             if haversine(center_lat, center_lon, lat, lon) <= radius_km:
                 result.append(building.uuid)
@@ -98,7 +98,7 @@ def filter_buildings_in_radius(
 
 async def filter_organizations(
         session: AsyncSession, query: Select, building_uuid: UUID | None, activity_uuid: UUID | None,
-        search_activity: str | None, search_name: str | None, latitude: str | None, longitude: str | None,
+        search_activity: str | None, search_name: str | None, latitude: Decimal | None, longitude: Decimal | None,
         radius: float | None, shape: ShapeEnum
 ) -> Select:
     """Filter organizations."""
@@ -140,8 +140,6 @@ async def filter_organizations(
     if all([latitude, longitude, radius]):
         check_latitude(latitude)
         check_longitude(longitude)
-        latitude = Decimal(latitude)
-        longitude = Decimal(longitude)
         building_query = select(BuildingDB)
         res = list(await session.scalars(building_query))
         filtered_buildings = filter_buildings_in_radius(latitude, longitude, radius, shape, res)
@@ -150,7 +148,11 @@ async def filter_organizations(
 
 
 async def filter_buildings(
-        session: AsyncSession, query: Select, latitude: str | None, longitude: str | None, radius: float | None,
+        session: AsyncSession,
+        query: Select,
+        latitude: Decimal | None,
+        longitude: Decimal | None,
+        radius: float | None,
         shape: ShapeEnum
 ) -> Select:
     """Filter buildings."""
@@ -160,8 +162,6 @@ async def filter_buildings(
     if all([latitude, longitude, radius]):
         check_latitude(latitude)
         check_longitude(longitude)
-        latitude = Decimal(latitude)
-        longitude = Decimal(longitude)
         building_query = select(BuildingDB)
         res = list(await session.scalars(building_query))
         filtered_buildings = filter_buildings_in_radius(latitude, longitude, radius, shape, res)

@@ -1,4 +1,5 @@
 import re
+from decimal import Decimal
 from typing import Optional
 from uuid import UUID
 
@@ -21,8 +22,8 @@ class BuildingOutSchema(BaseSchema):
     """Building out schema"""
     uuid: UUID
     address: str
-    latitude: str
-    longitude: str
+    latitude: Decimal
+    longitude: Decimal
 
 
 class BuildingListItemSchema(BaseSchema):
@@ -33,16 +34,16 @@ class BuildingListItemSchema(BaseSchema):
 
 class BuildingInSchema(BaseSchema):
     """Building in schema"""
-    latitude: str
-    longitude: str
+    latitude: Decimal
+    longitude: Decimal
 
     @field_validator('latitude')
-    def check_latitude(cls, latitude: str | None) -> str | None:
+    def check_latitude(cls, latitude: Decimal | None) -> Decimal | None:
         """Check latitude."""
         return check_latitude(latitude)
 
     @field_validator('longitude')
-    def check_longitude(cls, longitude: str | None) -> str | None:
+    def check_longitude(cls, longitude: Decimal | None) -> Decimal | None:
         """Check longitude."""
         return check_longitude(longitude)
 
@@ -54,8 +55,8 @@ class BuildingCreateSchema(BuildingInSchema):
 
 class BuildingUpdateSchema(BuildingInSchema):
     """Building update schema"""
-    latitude: str = None
-    longitude: str = None
+    latitude: Decimal = None
+    longitude: Decimal = None
     address: str = None
 
 

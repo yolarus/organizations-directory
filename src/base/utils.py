@@ -20,7 +20,8 @@ def handle_error(error: IntegrityError | CompileError | StaleDataError):
     if isinstance(error, CompileError):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f'{error}')
     error_text = get_error_message(error)
-    if 'not present in table' in error_text or 'FOREIGN KEY' in error_text:
+    sql_query_con = 'UPDATE' in f'{error}' or 'INSERT' in f'{error}'
+    if 'not present in table' in error_text or ('FOREIGN KEY' in error_text and sql_query_con):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error_text)
     error_text = get_error_message(error, True)
     raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=error_text)

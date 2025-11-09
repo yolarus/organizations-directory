@@ -170,15 +170,18 @@ class OrganizationSession(BaseSession):
 
     async def building_delete(self, building_uuid: UUID) -> None:
         """Building delete."""
-        async with self.session.begin():
-            query = (
-                delete(BuildingDB)
-                .where(BuildingDB.uuid == building_uuid)
-                .returning(BuildingDB)
-            )
-            building = await self.session.scalar(query)
-            if not building:
-                raise HTTPException(status.HTTP_404_NOT_FOUND, 'Building not found')
+        try:
+            async with self.session.begin():
+                query = (
+                    delete(BuildingDB)
+                    .where(BuildingDB.uuid == building_uuid)
+                    .returning(BuildingDB)
+                )
+                building = await self.session.scalar(query)
+                if not building:
+                    raise HTTPException(status.HTTP_404_NOT_FOUND, 'Building not found')
+        except IntegrityError as err:
+            return handle_error(err)
 
     async def activity_create(self, body: ActivityCreateSchema) -> ActivityDB | ActivityOutSchema:
         """Activity create."""
@@ -233,26 +236,36 @@ class OrganizationSession(BaseSession):
         try:
             async with self.session.begin():
                 data = body.model_dump(exclude_unset=True)
-                parent_uuid = data.get('parent_uuid')
+                parent_uuid = data.pop('parent_uuid', 'plug')
                 query = (
                     update(ActivityDB)
                     .where(ActivityDB.uuid == activity_uuid)
                     .values(**data)
                     .returning(ActivityDB)
                     .options(
-                        selectinload(ActivityDB.parent, recursion_depth=2),
                         selectinload(ActivityDB.children)
                     )
                 )
                 activity = await self.session.scalar(query)
                 if not activity:
                     raise HTTPException(status.HTTP_404_NOT_FOUND, 'Activity not found')
-                if parent_uuid and activity.children:
+                if parent_uuid != 'plug' and activity.children:
                     detail = 'Not possible to change parent activity while the activity has children activities'
                     raise HTTPException(status.HTTP_400_BAD_REQUEST, detail)
                 if parent_uuid == activity_uuid:
-                    detail = 'Not possible to chose the same activity as a parent.'
+                    detail = 'Not possible to choice the same activity as a parent'
                     raise HTTPException(status.HTTP_400_BAD_REQUEST, detail)
+                if parent_uuid != 'plug':
+                    query = (
+                        update(ActivityDB)
+                        .where(ActivityDB.uuid == activity_uuid)
+                        .values(parent_uuid=parent_uuid)
+                        .returning(ActivityDB)
+                        .options(
+                            selectinload(ActivityDB.parent, recursion_depth=2),
+                        )
+                    )
+                    activity = await self.session.scalar(query)
                 if activity.parent and activity.parent.parent and activity.parent.parent.parent_uuid:
                     detail = 'Not possible to choice parent activity with third level depth'
                     raise HTTPException(status.HTTP_400_BAD_REQUEST, detail)
@@ -262,12 +275,15 @@ class OrganizationSession(BaseSession):
 
     async def activity_delete(self, activity_uuid: UUID) -> None:
         """Activity delete."""
-        async with self.session.begin():
-            query = (
-                delete(ActivityDB)
-                .where(ActivityDB.uuid == activity_uuid)
-                .returning(ActivityDB)
-            )
-            activity = await self.session.scalar(query)
-            if not activity:
-                raise HTTPException(status.HTTP_404_NOT_FOUND, 'Activity not found')
+        try:
+            async with self.session.begin():
+                query = (
+                    delete(ActivityDB)
+                    .where(ActivityDB.uuid == activity_uuid)
+                    .returning(ActivityDB)
+                )
+                activity = await self.session.scalar(query)
+                if not activity:
+                    raise HTTPException(status.HTTP_404_NOT_FOUND, 'Activity not found')
+        except IntegrityError as err:
+            return handle_error(err)

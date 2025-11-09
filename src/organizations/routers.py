@@ -1,8 +1,9 @@
+from decimal import Decimal
 from typing import Annotated
 from uuid import UUID
 
 from fastapi import Depends, Query
-from fastapi_pagination.ext.sqlalchemy import paginate
+from fastapi_pagination.ext.sqlalchemy import apaginate
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
@@ -29,8 +30,7 @@ organization_router = FastAPIRouter()
     responses=responses(
         UUIDSchema,
         status.HTTP_201_CREATED,
-        statuses=[status.HTTP_404_NOT_FOUND, status.HTTP_409_CONFLICT],
-        exclude=[status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
+        statuses=[status.HTTP_404_NOT_FOUND, status.HTTP_409_CONFLICT]
     ),
     status_code=status.HTTP_201_CREATED,
     description='Organization create',
@@ -50,8 +50,7 @@ async def organization_create(
     response_model=PaginatePage[OrganizationListItemSchema],
     responses=responses(
         PaginatePage[OrganizationListItemSchema],
-        statuses=[status.HTTP_400_BAD_REQUEST],
-        exclude=[status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
+        statuses=[status.HTTP_400_BAD_REQUEST]
     ),
     description='Organization list',
 )
@@ -59,10 +58,10 @@ async def organization_list(
         building_uuid: Annotated[UUID, Query(description='Filter by building_uuid')] = None,
         activity_uuid: Annotated[UUID, Query(description='Filter by activity_uuid')] = None,
         latitude: Annotated[
-            str, Query(description='Latitude of the point from which the calculation will be made')
+            Decimal, Query(description='Latitude of the point from which the calculation will be made')
         ] = None,
         longitude: Annotated[
-            str, Query(description='Longitude of the point from which the calculation will be made')
+            Decimal, Query(description='Longitude of the point from which the calculation will be made')
         ] = None,
         radius: Annotated[
             float, Query(description='Radius in km along which the calculation will be made')
@@ -81,7 +80,7 @@ async def organization_list(
         search_name=search_name, latitude=latitude, longitude=longitude, radius=radius, shape=shape
     )
     organizations = await OrganizationSession(session).organization_list(**filters)
-    result = await paginate(session, organizations)
+    result = await apaginate(session, organizations)
     return result
 
 
@@ -90,8 +89,7 @@ async def organization_list(
     response_model=OrganizationDetailSchema,
     responses=responses(
         OrganizationDetailSchema,
-        statuses=[status.HTTP_404_NOT_FOUND],
-        exclude=[status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
+        statuses=[status.HTTP_404_NOT_FOUND]
     ),
     description='Organization detail',
 )
@@ -105,13 +103,12 @@ async def organization_detail(
     return result
 
 
-@organization_router.post(
+@organization_router.patch(
     organization_url.organization_update,
     response_model=UUIDSchema,
     responses=responses(
         UUIDSchema,
-        statuses=[status.HTTP_404_NOT_FOUND, status.HTTP_409_CONFLICT],
-        exclude=[status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
+        statuses=[status.HTTP_404_NOT_FOUND, status.HTTP_409_CONFLICT]
     ),
     description='Organization update',
 )
@@ -130,8 +127,7 @@ async def organization_update(
     organization_url.organization_delete,
     responses=responses(
         response_status=status.HTTP_204_NO_CONTENT,
-        statuses=[status.HTTP_404_NOT_FOUND],
-        exclude=[status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
+        statuses=[status.HTTP_404_NOT_FOUND]
     ),
     status_code=status.HTTP_204_NO_CONTENT,
     description='Organization delete',
@@ -152,8 +148,7 @@ async def organization_delete(
     responses=responses(
         BuildingOutSchema,
         status.HTTP_201_CREATED,
-        statuses=[status.HTTP_409_CONFLICT],
-        exclude=[status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
+        statuses=[status.HTTP_409_CONFLICT]
     ),
     status_code=status.HTTP_201_CREATED,
     description='Building create',
@@ -173,17 +168,16 @@ async def building_create(
     response_model=PaginatePage[BuildingListItemSchema],
     responses=responses(
         PaginatePage[BuildingListItemSchema],
-        statuses=[status.HTTP_400_BAD_REQUEST],
-        exclude=[status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
+        statuses=[status.HTTP_400_BAD_REQUEST]
     ),
     description='Building list',
 )
 async def building_list(
         latitude: Annotated[
-            str, Query(description='Latitude of the point from which the calculation will be made')
+            Decimal, Query(description='Latitude of the point from which the calculation will be made')
         ] = None,
         longitude: Annotated[
-            str, Query(description='Longitude of the point from which the calculation will be made')
+            Decimal, Query(description='Longitude of the point from which the calculation will be made')
         ] = None,
         radius: Annotated[
             float, Query(description='Radius in km along which the calculation will be made')
@@ -197,7 +191,7 @@ async def building_list(
     """Building list."""
     filters = get_filters(latitude=latitude, longitude=longitude, radius=radius, shape=shape)
     buildings = await OrganizationSession(session).building_list(**filters)
-    result = await paginate(session, buildings)
+    result = await apaginate(session, buildings)
     return result
 
 
@@ -206,8 +200,7 @@ async def building_list(
     response_model=BuildingOutSchema,
     responses=responses(
         BuildingOutSchema,
-        statuses=[status.HTTP_404_NOT_FOUND],
-        exclude=[status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
+        statuses=[status.HTTP_404_NOT_FOUND]
     ),
     description='Building detail',
 )
@@ -221,13 +214,12 @@ async def building_detail(
     return result
 
 
-@organization_router.post(
+@organization_router.patch(
     organization_url.building_update,
     response_model=BuildingOutSchema,
     responses=responses(
         BuildingOutSchema,
-        statuses=[status.HTTP_404_NOT_FOUND, status.HTTP_409_CONFLICT],
-        exclude=[status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
+        statuses=[status.HTTP_404_NOT_FOUND, status.HTTP_409_CONFLICT]
     ),
     description='Building update',
 )
@@ -246,8 +238,7 @@ async def building_update(
     organization_url.building_delete,
     responses=responses(
         response_status=status.HTTP_204_NO_CONTENT,
-        statuses=[status.HTTP_404_NOT_FOUND],
-        exclude=[status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
+        statuses=[status.HTTP_404_NOT_FOUND, status.HTTP_409_CONFLICT]
     ),
     status_code=status.HTTP_204_NO_CONTENT,
     description='Building delete',
@@ -268,8 +259,7 @@ async def building_delete(
     responses=responses(
         ActivityOutSchema,
         status.HTTP_201_CREATED,
-        statuses=[status.HTTP_400_BAD_REQUEST, status.HTTP_404_NOT_FOUND, status.HTTP_409_CONFLICT],
-        exclude=[status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
+        statuses=[status.HTTP_400_BAD_REQUEST, status.HTTP_404_NOT_FOUND, status.HTTP_409_CONFLICT]
     ),
     status_code=status.HTTP_201_CREATED,
     description='Activity create',
@@ -289,7 +279,7 @@ async def activity_create(
     response_model=PaginatePage[ActivityListItemSchema],
     responses=responses(
         PaginatePage[ActivityListItemSchema],
-        exclude=[status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
+        exclude=[status.HTTP_422_UNPROCESSABLE_CONTENT]
     ),
     description='Activity list',
 )
@@ -299,7 +289,7 @@ async def activity_list(
 ) -> PaginatePage[ActivityListItemSchema]:
     """Activity list."""
     activities = await OrganizationSession(session).activity_list()
-    result = await paginate(session, activities)
+    result = await apaginate(session, activities)
     return result
 
 
@@ -308,8 +298,7 @@ async def activity_list(
     response_model=ActivityDetailSchema,
     responses=responses(
         ActivityDetailSchema,
-        statuses=[status.HTTP_404_NOT_FOUND],
-        exclude=[status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
+        statuses=[status.HTTP_404_NOT_FOUND]
     ),
     description='Activity detail',
 )
@@ -323,13 +312,12 @@ async def activity_detail(
     return result
 
 
-@organization_router.post(
+@organization_router.patch(
     organization_url.activity_update,
     response_model=ActivityOutSchema,
     responses=responses(
         ActivityOutSchema,
-        statuses=[status.HTTP_400_BAD_REQUEST, status.HTTP_404_NOT_FOUND, status.HTTP_409_CONFLICT],
-        exclude=[status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
+        statuses=[status.HTTP_400_BAD_REQUEST, status.HTTP_404_NOT_FOUND, status.HTTP_409_CONFLICT]
     ),
     description='Activity update',
 )
@@ -348,8 +336,7 @@ async def activity_update(
     organization_url.activity_delete,
     responses=responses(
         response_status=status.HTTP_204_NO_CONTENT,
-        statuses=[status.HTTP_404_NOT_FOUND],
-        exclude=[status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
+        statuses=[status.HTTP_404_NOT_FOUND, status.HTTP_409_CONFLICT]
     ),
     status_code=status.HTTP_204_NO_CONTENT,
     description='Activity delete',

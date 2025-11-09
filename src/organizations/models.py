@@ -1,4 +1,6 @@
-from sqlalchemy import UUID, UniqueConstraint
+from decimal import Decimal
+
+from sqlalchemy import UUID, UniqueConstraint, Numeric
 from sqlalchemy.orm import Mapped, relationship
 
 from src.base.models import BaseDBModel, mc, FK
@@ -38,8 +40,8 @@ class BuildingDB(BaseDBModel):
     __table_args__ = (UniqueConstraint('latitude', 'longitude', name='latitude_longitude_uc'),)
 
     address: Mapped[str] = mc(nullable=False, unique=True)
-    latitude: Mapped[str] = mc(nullable=False)
-    longitude: Mapped[str] = mc(nullable=False)
+    latitude: Mapped[Decimal] = mc(Numeric(14, 12), nullable=False)
+    longitude: Mapped[Decimal] = mc(Numeric(15, 12), nullable=False)
 
     organizations: Mapped[list['OrganizationDB']] = relationship(back_populates='building')
 
@@ -65,4 +67,4 @@ class OrganizationActivityDB(BaseDBModel):
 
     uuid = None
     organization_uuid: Mapped[UUID] = mc(FK('organizations.uuid', ondelete='CASCADE'), primary_key=True)
-    activity_uuid: Mapped[UUID] = mc(FK('activities.uuid', ondelete='CASCADE'), primary_key=True)
+    activity_uuid: Mapped[UUID] = mc(FK('activities.uuid', ondelete='RESTRICT'), primary_key=True)
