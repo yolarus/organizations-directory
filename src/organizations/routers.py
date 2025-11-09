@@ -1,6 +1,7 @@
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends
+from fastapi import Depends, Query
 from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
@@ -8,7 +9,9 @@ from starlette import status
 from src.base.paginators import PaginatePage
 from src.base.routers import FastAPIRouter
 from src.base.schemas import responses, UUIDSchema
+from src.base.services import get_filters
 from src.config.session import get_async_session
+from src.organizations.enums import ShapeEnum
 from src.organizations.schemas import OrganizationCreateSchema, OrganizationListItemSchema, OrganizationDetailSchema, \
     OrganizationUpdateSchema, BuildingOutSchema, BuildingCreateSchema, BuildingListItemSchema, BuildingUpdateSchema, \
     ActivityCreateSchema, ActivityOutSchema, ActivityListItemSchema, ActivityDetailSchema, ActivityUpdateSchema
@@ -45,15 +48,36 @@ async def organization_create(
     response_model=PaginatePage[OrganizationListItemSchema],
     responses=responses(
         PaginatePage[OrganizationListItemSchema],
+        statuses=[status.HTTP_400_BAD_REQUEST],
         exclude=[status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
     ),
     description='Organization list',
 )
 async def organization_list(
+        building_uuid: Annotated[UUID, Query(description='Filter by building_uuid')] = None,
+        activity_uuid: Annotated[UUID, Query(description='Filter by activity_uuid')] = None,
+        latitude: Annotated[
+            str, Query(description='Latitude of the point from which the calculation will be made')
+        ] = None,
+        longitude: Annotated[
+            str, Query(description='Longitude of the point from which the calculation will be made')
+        ] = None,
+        radius: Annotated[
+            float, Query(description='Radius in km along which the calculation will be made')
+        ] = None,
+        shape: Annotated[
+            ShapeEnum, Query(description='Shape of the zone for which the calculation will be made')
+        ] = ShapeEnum.circle,
+        search_activity: Annotated[str, Query(description='Search by activity name')] = None,
+        search_name: Annotated[str, Query(description='Search by organization name')] = None,
         session: AsyncSession = Depends(get_async_session),
 ) -> PaginatePage[OrganizationListItemSchema]:
     """Organization list."""
-    organizations = await OrganizationSession(session).organization_list()
+    filters = get_filters(
+        building_uuid=building_uuid, activity_uuid=activity_uuid, search_activity=search_activity,
+        search_name=search_name, latitude=latitude, longitude=longitude, radius=radius, shape=shape
+    )
+    organizations = await OrganizationSession(session).organization_list(**filters)
     result = await paginate(session, organizations)
     return result
 
@@ -142,15 +166,29 @@ async def building_create(
     response_model=PaginatePage[BuildingListItemSchema],
     responses=responses(
         PaginatePage[BuildingListItemSchema],
+        statuses=[status.HTTP_400_BAD_REQUEST],
         exclude=[status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
     ),
     description='Building list',
 )
 async def building_list(
+        latitude: Annotated[
+            str, Query(description='Latitude of the point from which the calculation will be made')
+        ] = None,
+        longitude: Annotated[
+            str, Query(description='Longitude of the point from which the calculation will be made')
+        ] = None,
+        radius: Annotated[
+            float, Query(description='Radius in km along which the calculation will be made')
+        ] = None,
+        shape: Annotated[
+            ShapeEnum, Query(description='Shape of the zone for which the calculation will be made')
+        ] = ShapeEnum.circle,
         session: AsyncSession = Depends(get_async_session),
 ) -> PaginatePage[BuildingListItemSchema]:
     """Building list."""
-    buildings = await OrganizationSession(session).building_list()
+    filters = get_filters(latitude=latitude, longitude=longitude, radius=radius, shape=shape)
+    buildings = await OrganizationSession(session).building_list(**filters)
     result = await paginate(session, buildings)
     return result
 

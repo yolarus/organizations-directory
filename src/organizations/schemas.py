@@ -7,6 +7,7 @@ from pydantic import field_validator
 from starlette import status
 
 from src.base.schemas import BaseSchema
+from src.organizations.utils import check_latitude, check_longitude
 
 
 class PhoneSchema(BaseSchema):
@@ -38,22 +39,12 @@ class BuildingInSchema(BaseSchema):
     @field_validator('latitude')
     def check_latitude(cls, latitude: str | None) -> str | None:
         """Check latitude."""
-        pattern = re.compile(r'-?\d{1,2}(\.\d+)?')
-        if latitude is not None:
-            if not pattern.match(latitude):
-                error = [{'field': 'latitude', 'message': 'Latitude should be in format 00.0000'}]
-                raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, error)
-        return latitude
+        return check_latitude(latitude)
 
     @field_validator('longitude')
     def check_longitude(cls, longitude: str | None) -> str | None:
-        """Check latitude."""
-        pattern = re.compile(r'-?\d{1,3}(\.\d+)?')
-        if longitude is not None:
-            if not pattern.match(longitude):
-                error = [{'field': 'longitude', 'message': 'Longitude should be in format 000.0000'}]
-                raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, error)
-        return longitude
+        """Check longitude."""
+        return check_longitude(longitude)
 
 
 class BuildingCreateSchema(BuildingInSchema):

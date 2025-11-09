@@ -13,7 +13,7 @@ from src.base.utils import handle_error
 from src.organizations.schemas import OrganizationCreateSchema, OrganizationDetailSchema, OrganizationUpdateSchema, \
     BuildingOutSchema, BuildingCreateSchema, BuildingUpdateSchema, ActivityCreateSchema, ActivityOutSchema, \
     ActivityDetailSchema, ActivityUpdateSchema
-from src.organizations.services import get_activities_tree
+from src.organizations.services import get_activities_tree, filter_organizations, filter_buildings
 
 
 class OrganizationSession(BaseSession):
@@ -40,9 +40,13 @@ class OrganizationSession(BaseSession):
             return handle_error(err)
         return organization
 
-    async def organization_list(self) -> Select:
+    async def organization_list(self, **filters) -> Select:
         """Organization list."""
-        query = select(OrganizationDB).options(selectinload(OrganizationDB.phones))
+        query = (
+            select(OrganizationDB)
+            .options(selectinload(OrganizationDB.phones), selectinload(OrganizationDB.building))
+        )
+        query = await filter_organizations(self.session, query, **filters)
         return query
 
     async def organization_detail(self, organization_uuid) -> OrganizationDetailSchema:
@@ -128,9 +132,10 @@ class OrganizationSession(BaseSession):
             return handle_error(err)
         return building
 
-    async def building_list(self) -> Select:
+    async def building_list(self, **filters) -> Select:
         """Building list."""
         query = select(BuildingDB)
+        query = await filter_buildings(self.session, query, **filters)
         return query
 
     async def building_detail(self, building_uuid) -> BuildingDB | BuildingOutSchema:
