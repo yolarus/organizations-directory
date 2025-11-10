@@ -20,7 +20,7 @@
 1. Создание виртуального окружения `python3 -m venv venv`
 2. Активация виртуального окружения `source venv/bin/activate`
 3. Установка зависимостей `pip install -r requirements.txt`
-4. Запуск приложения `uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload`
+4. Запуск приложения `uvicorn src.main:app --host 127.0.0.1 --port 8000 --reload`
 5. Применение миграций `alembic upgrade head`
 6. При желании можно наполнить БД тестовыми данными из файла organizations
    - `pg_restore -U username -d database_name organizations`
@@ -30,5 +30,5 @@
 
 ## Документация
 Документация доступа по ссылкам:
-* http://localhost/api/redoc/
-* http://localhost/api/swagger/
+* http://localhost:8000/api/redoc/
+* http://localhost:8000/api/docs/

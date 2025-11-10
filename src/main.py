@@ -22,7 +22,7 @@ app = FastAPI(
     title='Organizations',
     debug=DEBUG,
     docs_url='/api/docs/',
-    redoc_url='/api/redoc',
+    redoc_url='/api/redoc/',
     swagger_ui_parameters=SWAGGER_UI_SETTINGS,
 )
 
