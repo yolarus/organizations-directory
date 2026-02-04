@@ -39,7 +39,7 @@ class TestOrganizationUpdateCase(BaseTestCase):
                                 {
                                     'uuid': str(activity112.uuid),
                                     'name': activity112.name,
-                                    'activities': None
+                                    'activities': []
                                 }
                             ]
                         }

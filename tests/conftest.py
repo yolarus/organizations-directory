@@ -10,6 +10,8 @@ from src.config.settings import project_config
 from src.main import app
 
 pytest_plugins = [
+    'tests.fixtures.activities',
+    'tests.fixtures.buildings',
     'tests.fixtures.organizations',
 ]
 
@@ -27,8 +29,8 @@ async_session_maker = async_sessionmaker(
 )
 
 
-async def get_test_async_session() -> AsyncGenerator[AsyncSession, None]:
-    """Get test async session."""
+async def override_async_session() -> AsyncGenerator[AsyncSession, None]:
+    """Override async session."""
     async with async_session_maker() as session:
         try:
             yield session
@@ -36,12 +38,12 @@ async def get_test_async_session() -> AsyncGenerator[AsyncSession, None]:
             await session.close()
 
 
-app.dependency_overrides[get_async_session] = get_test_async_session
+app.dependency_overrides[get_async_session] = override_async_session
 
 
 @pytest.fixture(scope='function')
-async def get_test_async_session() -> AsyncGenerator[AsyncSession, None]:
-    """Get test async session fixture."""
+async def get_override_async_session() -> AsyncGenerator[AsyncSession, None]:
+    """Get override async session fixture."""
     async with async_session_maker() as session:
         try:
             yield session

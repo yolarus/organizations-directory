@@ -6,14 +6,13 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload, joinedload
 from starlette import status
 
-from src import OrganizationDB, PhoneDB, OrganizationActivityDB, ActivityDB, BuildingDB
+from src import OrganizationDB, PhoneDB, OrganizationActivityDB, ActivityDB
+from src.activities.services import get_activities_tree
 from src.base.schemas import UUIDSchema
 from src.base.sessions import BaseSession
 from src.base.utils import handle_error
-from src.organizations.schemas import OrganizationCreateSchema, OrganizationDetailSchema, OrganizationUpdateSchema, \
-    BuildingOutSchema, BuildingCreateSchema, BuildingUpdateSchema, ActivityCreateSchema, ActivityOutSchema, \
-    ActivityDetailSchema, ActivityUpdateSchema
-from src.organizations.services import get_activities_tree, filter_organizations, filter_buildings
+from src.organizations.schemas import OrganizationCreateSchema, OrganizationDetailSchema, OrganizationUpdateSchema
+from src.organizations.services import filter_organizations
 
 
 class OrganizationSession(BaseSession):
@@ -64,7 +63,7 @@ class OrganizationSession(BaseSession):
             if not organization:
                 raise HTTPException(status.HTTP_404_NOT_FOUND, 'Organization not found')
             schema = OrganizationDetailSchema.model_validate(organization, from_attributes=True)
-            schema.activities_tree = await get_activities_tree(organization.activities)
+            schema.activities_tree = await get_activities_tree(self.session, organization.activities)
             return schema
 
     async def organization_update(
@@ -120,170 +119,3 @@ class OrganizationSession(BaseSession):
             organization = await self.session.scalar(query)
             if not organization:
                 raise HTTPException(status.HTTP_404_NOT_FOUND, 'Organization not found')
-
-    async def building_create(self, body: BuildingCreateSchema) -> BuildingDB | BuildingOutSchema:
-        """Building create."""
-        try:
-            async with self.session.begin():
-                data = body.model_dump()
-                query = insert(BuildingDB).values(**data).returning(BuildingDB)
-                building = await self.session.scalar(query)
-        except IntegrityError as err:
-            return handle_error(err)
-        return building
-
-    async def building_list(self, **filters) -> Select:
-        """Building list."""
-        query = select(BuildingDB)
-        query = await filter_buildings(self.session, query, **filters)
-        return query
-
-    async def building_detail(self, building_uuid) -> BuildingDB | BuildingOutSchema:
-        """Building detail."""
-        async with self.session.begin():
-            query = (
-                select(BuildingDB)
-                .where(BuildingDB.uuid == building_uuid)
-            )
-            building = await self.session.scalar(query)
-            if not building:
-                raise HTTPException(status.HTTP_404_NOT_FOUND, 'Building not found')
-            return building
-
-    async def building_update(self, body: BuildingUpdateSchema, building_uuid: UUID) -> BuildingDB | BuildingOutSchema:
-        """Building update."""
-        try:
-            async with self.session.begin():
-                data = body.model_dump(exclude_unset=True)
-                query = (
-                    update(BuildingDB)
-                    .where(BuildingDB.uuid == building_uuid)
-                    .values(**data)
-                    .returning(BuildingDB)
-                )
-                building = await self.session.scalar(query)
-                if not building:
-                    raise HTTPException(status.HTTP_404_NOT_FOUND, 'Building not found')
-        except IntegrityError as err:
-            return handle_error(err)
-        return building
-
-    async def building_delete(self, building_uuid: UUID) -> None:
-        """Building delete."""
-        try:
-            async with self.session.begin():
-                query = (
-                    delete(BuildingDB)
-                    .where(BuildingDB.uuid == building_uuid)
-                    .returning(BuildingDB)
-                )
-                building = await self.session.scalar(query)
-                if not building:
-                    raise HTTPException(status.HTTP_404_NOT_FOUND, 'Building not found')
-        except IntegrityError as err:
-            return handle_error(err)
-
-    async def activity_create(self, body: ActivityCreateSchema) -> ActivityDB | ActivityOutSchema:
-        """Activity create."""
-        try:
-            async with self.session.begin():
-                data = body.model_dump()
-                query = (
-                    insert(ActivityDB)
-                    .values(**data)
-                    .returning(ActivityDB)
-                    .options(
-                        selectinload(ActivityDB.parent, recursion_depth=2),
-                    )
-                )
-                activity = await self.session.scalar(query)
-                if activity.parent and activity.parent.parent and activity.parent.parent.parent_uuid:
-                    detail = 'Not possible to choice parent activity with third level depth'
-                    raise HTTPException(status.HTTP_400_BAD_REQUEST, detail)
-        except IntegrityError as err:
-            return handle_error(err)
-        return activity
-
-    async def activity_list(self) -> Select:
-        """Activity list."""
-        query = (
-            select(ActivityDB)
-            .where(ActivityDB.parent_uuid.is_(None))
-            .options(
-                selectinload(ActivityDB.children, recursion_depth=2)
-            )
-        )
-        return query
-
-    async def activity_detail(self, activity_uuid) -> ActivityDB | ActivityDetailSchema:
-        """Activity detail."""
-        async with self.session.begin():
-            query = (
-                select(ActivityDB)
-                .where(ActivityDB.uuid == activity_uuid)
-                .options(
-                    selectinload(ActivityDB.parent, recursion_depth=2),
-                    selectinload(ActivityDB.children, recursion_depth=2)
-                )
-            )
-            activity = await self.session.scalar(query)
-            if not activity:
-                raise HTTPException(status.HTTP_404_NOT_FOUND, 'Activity not found')
-            return activity
-
-    async def activity_update(self, body: ActivityUpdateSchema, activity_uuid: UUID) -> ActivityDB | ActivityOutSchema:
-        """Activity update."""
-        try:
-            async with self.session.begin():
-                data = body.model_dump(exclude_unset=True)
-                parent_uuid = data.pop('parent_uuid', 'plug')
-                query = (
-                    update(ActivityDB)
-                    .where(ActivityDB.uuid == activity_uuid)
-                    .values(**data)
-                    .returning(ActivityDB)
-                    .options(
-                        selectinload(ActivityDB.children)
-                    )
-                )
-                activity = await self.session.scalar(query)
-                if not activity:
-                    raise HTTPException(status.HTTP_404_NOT_FOUND, 'Activity not found')
-                if parent_uuid != 'plug' and activity.children:
-                    detail = 'Not possible to change parent activity while the activity has children activities'
-                    raise HTTPException(status.HTTP_400_BAD_REQUEST, detail)
-                if parent_uuid == activity_uuid:
-                    detail = 'Not possible to choice the same activity as a parent'
-                    raise HTTPException(status.HTTP_400_BAD_REQUEST, detail)
-                if parent_uuid != 'plug':
-                    query = (
-                        update(ActivityDB)
-                        .where(ActivityDB.uuid == activity_uuid)
-                        .values(parent_uuid=parent_uuid)
-                        .returning(ActivityDB)
-                        .options(
-                            selectinload(ActivityDB.parent, recursion_depth=2),
-                        )
-                    )
-                    activity = await self.session.scalar(query)
-                if activity.parent and activity.parent.parent and activity.parent.parent.parent_uuid:
-                    detail = 'Not possible to choice parent activity with third level depth'
-                    raise HTTPException(status.HTTP_400_BAD_REQUEST, detail)
-        except IntegrityError as err:
-            return handle_error(err)
-        return activity
-
-    async def activity_delete(self, activity_uuid: UUID) -> None:
-        """Activity delete."""
-        try:
-            async with self.session.begin():
-                query = (
-                    delete(ActivityDB)
-                    .where(ActivityDB.uuid == activity_uuid)
-                    .returning(ActivityDB)
-                )
-                activity = await self.session.scalar(query)
-                if not activity:
-                    raise HTTPException(status.HTTP_404_NOT_FOUND, 'Activity not found')
-        except IntegrityError as err:
-            return handle_error(err)

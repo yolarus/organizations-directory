@@ -1,14 +1,13 @@
 import re
-from decimal import Decimal
-from typing import Optional
 from uuid import UUID
 
 from fastapi import HTTPException
 from pydantic import field_validator
 from starlette import status
 
+from src.activities.schemas import ActivityTreeItemSchema
 from src.base.schemas import BaseSchema
-from src.organizations.utils import check_latitude, check_longitude
+from src.buildings.schemas import BuildingOutSchema
 
 
 class PhoneSchema(BaseSchema):
@@ -17,95 +16,12 @@ class PhoneSchema(BaseSchema):
     phone: str
 
 
-# Building
-class BuildingOutSchema(BaseSchema):
-    """Building out schema"""
-    uuid: UUID
-    address: str
-    latitude: Decimal
-    longitude: Decimal
-
-
-class BuildingListItemSchema(BaseSchema):
-    """Building list item schema"""
-    uuid: UUID
-    address: str
-
-
-class BuildingInSchema(BaseSchema):
-    """Building in schema"""
-    latitude: Decimal
-    longitude: Decimal
-
-    @field_validator('latitude')
-    def check_latitude(cls, latitude: Decimal | None) -> Decimal | None:
-        """Check latitude."""
-        return check_latitude(latitude)
-
-    @field_validator('longitude')
-    def check_longitude(cls, longitude: Decimal | None) -> Decimal | None:
-        """Check longitude."""
-        return check_longitude(longitude)
-
-
-class BuildingCreateSchema(BuildingInSchema):
-    """Building create schema"""
-    address: str
-
-
-class BuildingUpdateSchema(BuildingInSchema):
-    """Building update schema"""
-    latitude: Decimal = None
-    longitude: Decimal = None
-    address: str = None
-
-
-# Activity
-class ActivityTreeItemSchema(BaseSchema):
-    """Activity tree item schema."""
-    uuid: UUID
-    name: str
-    activities: list['ActivityTreeItemSchema'] = None
-
-
-class ActivityCreateSchema(BaseSchema):
-    """Activity create schema."""
-    name: str
-    parent_uuid: UUID | None = None
-
-
-class ActivityOutSchema(BaseSchema):
-    """Activity out schema."""
-    uuid: UUID
-    name: str
-    parent: Optional['ActivityOutSchema']
-
-
-class ActivityListItemSchema(BaseSchema):
-    """Activity out schema."""
-    uuid: UUID
-    name: str
-    children: list['ActivityListItemSchema']
-
-
-class ActivityDetailSchema(ActivityOutSchema):
-    """Activity detail schema."""
-    children: list['ActivityListItemSchema']
-
-
-class ActivityUpdateSchema(BaseSchema):
-    """Activity update schema."""
-    name: str = None
-    parent_uuid: UUID | None = None
-
-
-# Organization
 class OrganizationInSchema(BaseSchema):
     """Organization in schema."""
     phones: list[str]
 
     @field_validator('phones')
-    def check_phones(cls, phones: list[str] | None) -> list[str]:
+    def check_phones(cls, phones: list[str] | None) -> list[str] | None:
         """Check phone numbers."""
         pattern = re.compile(r'^\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}$')
         if phones is not None:

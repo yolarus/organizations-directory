@@ -7,7 +7,7 @@ from src.base.base_test import BaseTestCase
 
 class TestBuildingCreateCase(BaseTestCase):
     """Building create test suite."""
-    url = '/organizations/buildings/'
+    url = '/buildings/'
 
     @staticmethod
     def get_data() -> dict:

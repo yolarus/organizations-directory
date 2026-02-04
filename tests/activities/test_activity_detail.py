@@ -7,7 +7,7 @@ from src.base.base_test import BaseTestCase
 
 class TestActivityDetailCase(BaseTestCase):
     """Activity detail test suite."""
-    url = '/organizations/activities'
+    url = '/activities'
 
     async def test_activity_detail(self, activity1):
         """Test activity detail."""

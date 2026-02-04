@@ -8,7 +8,7 @@ from src.base.base_test import BaseTestCase
 
 class TestBuildingDetailCase(BaseTestCase):
     """Building detail test suite."""
-    url = '/organizations/buildings'
+    url = '/buildings'
 
     async def test_building_detail(self, building):
         """Test building detail."""

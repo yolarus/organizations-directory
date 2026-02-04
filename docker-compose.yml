@@ -6,9 +6,10 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile
+      target: final
     command: ./docker_commands.sh
     volumes:
-      - .:/code
+      - .:/app
     ports:
       - "8000:8000"
     env_file:

@@ -34,7 +34,7 @@ class TestOrganizationDetailCase(BaseTestCase):
                                 {
                                     'uuid': str(activity111.uuid),
                                     'name': activity111.name,
-                                    'activities': None
+                                    'activities': []
                                 }
                             ]
                         }

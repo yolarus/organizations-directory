@@ -7,7 +7,7 @@ from src.base.base_test import BaseTestCase
 
 class TestActivityCreateCase(BaseTestCase):
     """Activity create test suite."""
-    url = '/organizations/activities/'
+    url = '/activities/'
 
     @staticmethod
     def get_data(name: str = 'Test activity', parent_uuid: uuid.UUID = None) -> dict:

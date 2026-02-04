@@ -7,7 +7,7 @@ from src.base.base_test import BaseTestCase
 
 class TestBuildingDeleteCase(BaseTestCase):
     """Building delete test suite."""
-    url = '/organizations/buildings'
+    url = '/buildings'
 
     async def test_building_delete(self, building):
         """Test building delete."""
